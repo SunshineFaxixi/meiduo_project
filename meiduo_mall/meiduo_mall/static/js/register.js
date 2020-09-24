@@ -83,6 +83,10 @@ let vm = new Vue({
                         }, 1000)
                     } else {
                         if(response.data.code === '4001'){ // 图形验证码错误
+                            this.error_image_code = true;
+                            this.error_image_code_message = response.data.errmsg;
+                        }
+                        else{ // 4002
                             this.error_sms_code = true;
                             this.error_sms_code_message = response.data.errmsg;
                         }
