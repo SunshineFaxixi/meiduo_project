@@ -4,7 +4,7 @@ from django import http
 import re
 from django.db import DatabaseError
 from django.urls import reverse
-from django.contrib.auth import login, authenticate
+from django.contrib.auth import login, authenticate, logout
 from django_redis import get_redis_connection
 
 from meiduo_mall.utils.response_code import RETCODE
@@ -109,6 +109,16 @@ class LoginView(View):
         # 响应结果
         return response
 
+
+class LogoutView(View):
+    def get(self, request):
+        # 清理session
+        logout(request)
+        # 退出登录，重定向到登录页
+        response = redirect(reverse('contents:index'))
+        # 退出登录时清除cookie中的username
+        response.delete_cookie('username')
+        return response
 
 
 class UsernameCountView(View):
