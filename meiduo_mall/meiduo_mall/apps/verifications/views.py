@@ -8,6 +8,7 @@ from verifications.libs.captcha.captcha import captcha
 from . import constants
 from meiduo_mall.utils.response_code import RETCODE
 from verifications.libs.yuntongxun.ccp_sms import CCP
+from celery_tasks.sms.tasks import send_sms_code
 
 # Create your views here.
 
@@ -51,14 +52,28 @@ class SMSCodeView(View):
         sms_code = '%06d' % random.randint(0, 999999)
         logger.info(sms_code)
 
+        # # 保存短信验证码
+        # redis_conn.setex('sms_%s' % mobile, constants.IMAGE_CODE_REDIS_EXPIRES, sms_code)
+        #
+        # # 保存发送短信验证码的标记
+        # redis_conn.setex('send_flag_%s' % mobile, constants.SEND_SMS_CODE_INTERVAL, 1)
+
+        # 创建redis管道
+        pl = redis_conn.pipeline()
+        # 将redis请求添加到队列
         # 保存短信验证码
-        redis_conn.setex('sms_%s' % mobile, constants.IMAGE_CODE_REDIS_EXPIRES, sms_code)
+        pl.setex('sms_%s' % mobile, constants.IMAGE_CODE_REDIS_EXPIRES, sms_code)
 
         # 保存发送短信验证码的标记
-        redis_conn.setex('send_flag_%s' % mobile, constants.SEND_SMS_CODE_INTERVAL, 1)
+        pl.setex('send_flag_%s' % mobile, constants.SEND_SMS_CODE_INTERVAL, 1)
 
-        # 发送短信验证码
-        CCP().send_template_sms('17301768520', [sms_code, constants.IMAGE_CODE_REDIS_EXPIRES / 60], 1)
+        # 执行请求
+        pl.execute()
+
+        # # 发送短信验证码
+        # CCP().send_template_sms('17301768520', [sms_code, constants.IMAGE_CODE_REDIS_EXPIRES / 60], 1)
+        # 使用celery发送短信验证码
+        send_sms_code.delay(mobile, sms_code)
 
         # 响应结果
         return http.JsonResponse({'code': RETCODE.OK, 'errmsg': '发送短信成功'})
