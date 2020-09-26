@@ -4,7 +4,7 @@ from django import http
 import re
 from django.db import DatabaseError
 from django.urls import reverse
-from django.contrib.auth import login
+from django.contrib.auth import login, authenticate
 from django_redis import get_redis_connection
 
 from meiduo_mall.utils.response_code import RETCODE
@@ -63,6 +63,44 @@ class RegisterView(View):
         # return http.HttpResponse('注册成功，重定向到首页')
         # return redirect('/')
         return redirect(reverse('contents:index'))
+
+
+class LoginView(View):
+    """用户登录"""
+    def get(self, request):
+        return render(request, 'login.html')
+    def post(self, request):
+        # 接收参数
+        username = request.POST.get('username')
+        password = request.POST.get('password')
+        remembered = request.POST.get('remembered')
+
+        # 校验参数
+        if not all([username, password]):
+            return http.HttpResponseForbidden('缺少必传参数')
+        if not re.match(r'^[a-zA-Z0-9_-]{5,20}$', username):
+            return http.HttpResponseForbidden('请输入正确的用户名或手机号')
+        if not re.match(r'^[a-zA-Z0-9]{8,20}$', password):
+            return http.HttpResponseForbidden('密码最少8位，最长20位')
+
+        # 认证用户: 使用账户查询用户是否存在，如果用户存在，再校验密码是否正确
+        user = authenticate(username=username, password=password)
+        if user is None:
+            return render(request, 'login.html', {'account_errmsg': '账号或密码错误'})
+
+        # 状态保持
+        login(request, user)
+        # 使用remembered确定状态保持周期（实现记住登录）
+        if remembered != 'on':
+            # 没有记住密码：状态保持在浏览器会话结束后就销毁
+            request.session.set_expiry(0) # 单位是秒
+        else:
+            # 记住登录：状态保持周期为2周：默认是2周
+            request.session.set_expiry(None)
+
+        # 响应结果
+        return redirect(reverse('contents:index'))
+
 
 
 class UsernameCountView(View):
