@@ -59,10 +59,13 @@ class RegisterView(View):
             return render(request, 'register.html', {'register_errmsg': '注册失败'})
         # 状态保持
         login(request, user)
+        response = redirect(reverse('contents:index'))
+
+        # 需要将用户名缓存到cookie中，实现首页右上角展示用户名信息
+        response.set_cookie('username', user.username, max_age=3600 * 24 * 15)
+
         # 响应结果
-        # return http.HttpResponse('注册成功，重定向到首页')
-        # return redirect('/')
-        return redirect(reverse('contents:index'))
+        return response
 
 
 class LoginView(View):
@@ -98,8 +101,13 @@ class LoginView(View):
             # 记住登录：状态保持周期为2周：默认是2周
             request.session.set_expiry(None)
 
+        response = redirect(reverse('contents:index'))
+
+        # 需要将用户名缓存到cookie中，实现首页右上角展示用户名信息
+        response.set_cookie('username', user.username, max_age=3600 * 24 * 15)
+
         # 响应结果
-        return redirect(reverse('contents:index'))
+        return response
 
 
 
