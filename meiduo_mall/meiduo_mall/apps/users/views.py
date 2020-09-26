@@ -9,9 +9,18 @@ from django_redis import get_redis_connection
 
 from meiduo_mall.utils.response_code import RETCODE
 from users.models import User
-
-
 # Create your views here.
+
+
+class UserInfoView(View):
+    """用户中心"""
+    def get(self, request):
+        if request.user.is_authenticated:
+            return render(request, 'user_center_info.html')
+        else:
+            return redirect(reverse('users:login'))
+
+
 class RegisterView(View):
     def get(self, request):
         return render(request, 'register.html')

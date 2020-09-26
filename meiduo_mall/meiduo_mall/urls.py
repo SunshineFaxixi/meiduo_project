@@ -20,5 +20,5 @@ urlpatterns = [
     url(r'^admin/', admin.site.urls),
     url(r'^', include(('users.urls', 'users'), namespace='users')),
     url(r'^', include(('contents.urls', 'contents'), namespace='contents')),
-    url(r'^', include(('verifications.urls', 'verifications'), namespace='verifications'))
+    url(r'^', include(('verifications.urls', 'verifications')))
 ]
