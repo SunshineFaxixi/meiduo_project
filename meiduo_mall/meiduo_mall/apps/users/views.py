@@ -6,19 +6,21 @@ from django.db import DatabaseError
 from django.urls import reverse
 from django.contrib.auth import login, authenticate, logout
 from django_redis import get_redis_connection
+from django.contrib.auth.mixins import LoginRequiredMixin
 
 from meiduo_mall.utils.response_code import RETCODE
 from users.models import User
 # Create your views here.
 
 
-class UserInfoView(View):
+class UserInfoView(LoginRequiredMixin, View):
     """用户中心"""
     def get(self, request):
-        if request.user.is_authenticated:
-            return render(request, 'user_center_info.html')
-        else:
-            return redirect(reverse('users:login'))
+        # if request.user.is_authenticated:
+        #     return render(request, 'user_center_info.html')
+        # else:
+        #     return redirect(reverse('users:login'))
+        return render(request, 'user_center_info.html')
 
 
 class RegisterView(View):
@@ -111,6 +113,15 @@ class LoginView(View):
             request.session.set_expiry(None)
 
         response = redirect(reverse('contents:index'))
+
+        # 先取出next
+        next = request.GET.get('next')
+        if next:
+            # 重定向到next
+            response = redirect(next)
+        else:
+            # 重定向到首页
+            redirect(reverse('contents:index'))
 
         # 需要将用户名缓存到cookie中，实现首页右上角展示用户名信息
         response.set_cookie('username', user.username, max_age=3600 * 24 * 15)
