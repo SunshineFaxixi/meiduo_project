@@ -83,6 +83,7 @@ class LoginView(View):
     """用户登录"""
     def get(self, request):
         return render(request, 'login.html')
+
     def post(self, request):
         # 接收参数
         username = request.POST.get('username')
