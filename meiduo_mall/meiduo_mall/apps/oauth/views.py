@@ -11,6 +11,7 @@ from django_redis import get_redis_connection
 from meiduo_mall.utils.response_code import RETCODE
 from .models import OAuthQQUser
 from .utils import generate_access_token, check_access_token
+from users.models import User
 # Create your views here.
 
 
@@ -53,8 +54,9 @@ class QQAuthUserView(View):
             # 实现状态保持
             login(request, oauth_user.user)
 
-            # 重定向到首页
-            response = redirect(reverse('contents:index'))
+            # 重定向
+            next = request.GET.get('state')
+            response = redirect(next)
 
             # 将用户名写到cookie
             response.set_cookie('username', oauth_user.user.username, max_age=3600 * 24 * 15)
@@ -74,10 +76,10 @@ class QQAuthUserView(View):
         if not all([mobile, password, sms_code_client, access_token_openid]):
             return http.HttpResponseForbidden('缺少必传参数')
         # 判断手机号是否合法
-        if not re.match():
+        if not re.match(r'^1[3-9]\d{9}$', mobile):
             return http.HttpResponseForbidden('请输入正确的手机号码')
         # 判断密码是否合格
-        if not re.match():
+        if not re.match(r'^[0-9a-zA-Z]{8,20}$', password):
             return http.HttpResponseForbidden('请输入8-20位的密码')
         # 判断短信验证码是否一致
         redis_conn = get_redis_connection('verify_code')
@@ -90,6 +92,36 @@ class QQAuthUserView(View):
         openid = check_access_token(access_token_openid)
         if not openid:
             return render(request, 'oauth_callback.html', {'openid_errmsg': 'openid已失效'})
+
+        # 实现主体业务逻辑
+        # 使用手机号查询用户是否存在
+        try:
+            user = User.objects.get(mobile=mobile)
+        except Exception as e:
+            # 如果手机号不存在，将新建用户
+            user = User.objects.create_user(username=mobile, password=password, mobile=mobile)
+        else:
+            # 如果手机号存在，需要校验密码
+            if not user.check_password(password):
+                return render(request, 'oauth_callback.html', {'account_errmsg': '用户名或密码错误'})
+
+        # 将新建用户或已存在用户绑定到openid
+        try:
+            oauth_qq_user = OAuthQQUser.objects.create(user=user, openid=openid)
+        except Exception as e:
+            logger.error(e)
+            return render(request, 'oauth_callback.html', {'qq_login_errmsg': '账户或密码错误'})
+
+        # 状态保持:openid已经绑定到美多商城用户，oauth_qq_user.qq表示从QQ登录模型类对象中找到对应的用户模型类对象
+        login(request, oauth_qq_user.user)
+
+        # 重定向
+        next = request.GET.get('state')
+        response = redirect(next)
+        # 将用户名写入cookie中
+        response.set_cookie('username', oauth_qq_user.user.username, max_age=3600 * 24 * 15)
+        # 响应QQ登录结果
+        return response
 
 
 class QQAuthURLView(View):
