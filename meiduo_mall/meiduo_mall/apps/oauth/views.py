@@ -9,6 +9,7 @@ from django.urls import reverse
 
 from meiduo_mall.utils.response_code import RETCODE
 from .models import OAuthQQUser
+from .utils import generate_access_token
 # Create your views here.
 
 
@@ -43,7 +44,9 @@ class QQAuthUserView(View):
             oauth_user = OAuthQQUser.objects.get(openid=openid)
         except OAuthQQUser.DoesNotExist:
             # openid没绑定美多商城用户
-            return render(request, 'oauth_callback.html')
+            access_token_openid = generate_access_token(openid)
+            context = {'access_token_openid': access_token_openid}
+            return render(request, 'oauth_callback.html', context)
         else:
             # openid已绑定美多商城用户
             # 实现状态保持
