@@ -3,13 +3,14 @@ from QQLoginTool.QQtool import OAuthQQ
 from django import http
 from django.conf import settings
 from django.views import View
-import logging
+import logging, re
 from django.contrib.auth import login
 from django.urls import reverse
+from django_redis import get_redis_connection
 
 from meiduo_mall.utils.response_code import RETCODE
 from .models import OAuthQQUser
-from .utils import generate_access_token
+from .utils import generate_access_token, check_access_token
 # Create your views here.
 
 
@@ -61,7 +62,34 @@ class QQAuthUserView(View):
             # 响应结果
             return response
 
-        pass
+    def post(self, request):
+        """实现绑定用户的逻辑"""
+        # 接收参数
+        mobile = request.POST.get('mobile')
+        password = request.POST.get('password')
+        sms_code_client = request.POST.get('sms_code')
+        access_token_openid = request.POST.get('access_token_openid')
+        # 校验参数
+        # 判断参数是否齐全
+        if not all([mobile, password, sms_code_client, access_token_openid]):
+            return http.HttpResponseForbidden('缺少必传参数')
+        # 判断手机号是否合法
+        if not re.match():
+            return http.HttpResponseForbidden('请输入正确的手机号码')
+        # 判断密码是否合格
+        if not re.match():
+            return http.HttpResponseForbidden('请输入8-20位的密码')
+        # 判断短信验证码是否一致
+        redis_conn = get_redis_connection('verify_code')
+        sms_code_server = redis_conn.get('sms_%s' % mobile)
+        if sms_code_server is None:
+            return render(request, 'oauth_callback.html', {'sms_code_errmsg': '无效的短信验证码'})
+        if sms_code_client != sms_code_server.decode():
+            return render(request, 'oauth_callback.html', {'sms_code_errmsg': '输入短信验证码有误'})
+        # 判断openid是否有效：openid使用itsdangerous签名之后只有600秒的有效期
+        openid = check_access_token(access_token_openid)
+        if not openid:
+            return render(request, 'oauth_callback.html', {'openid_errmsg': 'openid已失效'})
 
 
 class QQAuthURLView(View):
