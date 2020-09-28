@@ -12,5 +12,5 @@ def send_sms_code(mobile, sms_code):
     : param sms_code: 短信验证码
     ：return: 成功 0，失败：-1
     """
-    send_ret = CCP().send_template_sms('17301768520', [sms_code, constants.IMAGE_CODE_REDIS_EXPIRES // 60], 1)
+    send_ret = CCP().send_template_sms(mobile, [sms_code, constants.IMAGE_CODE_REDIS_EXPIRES // 60], 1)
     return send_ret
