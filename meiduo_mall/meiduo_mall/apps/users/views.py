@@ -11,6 +11,7 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from meiduo_mall.utils.response_code import RETCODE
 from users.models import User
 from meiduo_mall.utils.views import LoginRequiredJSONMixin
+from celery_tasks.email.tasks import send_verify_email
 # Create your views here.
 
 
@@ -31,6 +32,9 @@ class EmailView(LoginRequiredJSONMixin, View):
             request.user.save()
         except Exception as e:
             return http.JsonResponse({'code': RETCODE.DBERR, 'errmsg': '添加邮箱失败'})
+        # 发送邮箱验证
+        verify_url = 'www.test.com'
+        send_verify_email(email, verify_url)
         # 响应结果
         return http.JsonResponse({'code': RETCODE.OK, 'errmsg': 'OK'})
 
