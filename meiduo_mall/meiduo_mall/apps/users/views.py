@@ -17,6 +17,11 @@ from .utils import generate_verify_email_url, check_verify_email_token
 
 logger = logging.getLogger('django')
 
+class AddressView(View):
+    """收货地址"""
+    def get(self, request):
+        return render(request, 'user_center_site.html')
+
 
 class VerifyEmailView(View):
     """验证邮箱"""

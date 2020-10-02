@@ -9,4 +9,5 @@ urlpatterns = [
     url(r'^info/$', views.UserInfoView.as_view(), name='info'), # 用户中心
     url(r'^emails/$', views.EmailView.as_view()),
     url(r'^emails/verification/', views.VerifyEmailView.as_view()),
+    url(r'^addresses/$', views.AddressView.as_view(), name='address'),
 ]
