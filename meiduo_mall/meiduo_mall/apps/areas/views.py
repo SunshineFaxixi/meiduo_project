@@ -32,4 +32,23 @@ class AreasView(View):
                 return http.JsonResponse({'code': RETCODE.DBERR, 'errmsg': '查询省份数据错误'})
         else:
             # 查询城市或区县数据
-            pass
+            try:
+                parent_model = models.Areas.objects.get(id=area_id)
+                # model_list = parent_model.areas_set.all()
+                sub_model_list = parent_model.subs.all()
+                subs = []
+                for sub_model in sub_model_list:
+                    sub_dict = {
+                        'id': sub_model.id,
+                        'name': sub_model.name,
+                    }
+                    subs.append(sub_dict)
+                sub_data = {
+                    'id': parent_model.id,
+                    'name': parent_model.name,
+                    'subs': subs
+                }
+                return http.JsonResponse({'code': RETCODE.OK, 'errmsg': 'OK', 'sub_data': sub_data})
+            except Exception as e:
+                logger.error(e)
+                return http.JsonResponse({'code': RETCODE.OK, 'errmsg': '查询城市或区县数据错误'})
