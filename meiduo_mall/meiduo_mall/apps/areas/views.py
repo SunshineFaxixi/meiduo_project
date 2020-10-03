@@ -23,7 +23,7 @@ class AreasView(View):
             if not province_list:
                 # 查询省份数据
                 try:
-                    province_model_list = models.Areas.objects.filter(parent__isnull=True)
+                    province_model_list = models.Area.objects.filter(parent__isnull=True)
                     province_list = []
                     for province_model in province_model_list:
                         province_dict = {
@@ -44,8 +44,8 @@ class AreasView(View):
             if not sub_data:
                 # 查询城市或区县数据
                 try:
-                    parent_model = models.Areas.objects.get(id=area_id)
-                    # model_list = parent_model.areas_set.all()
+                    parent_model = models.Area.objects.get(id=area_id)
+                    # model_list = parent_model.area_set.all()
                     sub_model_list = parent_model.subs.all()
                     subs = []
                     for sub_model in sub_model_list:
