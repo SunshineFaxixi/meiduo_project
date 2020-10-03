@@ -44,6 +44,7 @@ INSTALLED_APPS = [
     'users', # 用户模块
     'contents', # 首页广告
     'oauth', # 第三方登录
+    'areas', # 省市区三级联动
 ]
 
 MIDDLEWARE = [
