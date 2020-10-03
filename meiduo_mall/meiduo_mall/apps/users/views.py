@@ -10,9 +10,11 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 
 from meiduo_mall.utils.response_code import RETCODE
 from users.models import User
+from .models import Address
 from meiduo_mall.utils.views import LoginRequiredJSONMixin
 from celery_tasks.email.tasks import send_verify_email
 from .utils import generate_verify_email_url, check_verify_email_token
+
 # Create your views here.
 
 logger = logging.getLogger('django')
@@ -20,18 +22,64 @@ logger = logging.getLogger('django')
 
 class AddressCreateView(LoginRequiredJSONMixin, View):
     """新增地址"""
+
     def post(self, request):
         """实现新增地址逻辑"""
-        pass
+        # 接收参数
+        json_str = request.body.decode()
+        json_dict = json.loads(json_str)
+        receiver = json_dict.get('receiver')
+        province_id = json_dict.get('province_id')
+        city_id = json_dict.get('city_id')
+        distinct_id = json_dict.get('district_id')
+        place = json_dict.get('place')
+        mobile = json_dict.get('mobile')
+        tel = json_dict.get('tel')
+        email = json_dict.get('email')
+        # 校验参数
+        if not all([receiver, province_id, city_id, distinct_id, place, mobile]):
+            return http.HttpResponseForbidden('缺少必传参数')
+        if not re.match(r'^1[3-9]\d{9}$', mobile):
+            return http.HttpResponseForbidden('参数mobile有误')
+        if tel:
+            if not re.match(r'^(0[0-9]{2,3})?([2-9][0-9]{6,7})+(-[0-9]{1,4})?$', tel):
+                return http.HttpResponseForbidden('参数tel有误')
+        if email:
+            if not re.match(r'^[a-z0-9][\w\.\-]*@[a-z0-9\-]+(\.[a-z]{2,5}){1,2}$', email):
+                return http.HttpResponseForbidden('参数email有误')
+
+        # 保存用户传入的地址信息
+        try:
+            Address.objects.create(
+                user=request.user,
+                title=receiver,
+                receiver=receiver,
+                province_id=province_id,
+                city_id=city_id,
+                distinct_id=distinct_id,
+                place=place,
+                mobile=mobile,
+                tel=tel,
+                email=email,
+            )
+        except Exception as e:
+            logger.error(e)
+            return http.JsonResponse({'code': RETCODE.DBERR, 'errmsg':   '新增地址失败'})
+
+        # 响应新增地址结果：需要将新增的地址返回给前端渲染
+        return http.JsonResponse({'code': RETCODE.OK, 'errmsg': '新增地址成功'})
+
 
 class AddressView(LoginRequiredMixin, View):
     """收货地址"""
+
     def get(self, request):
         return render(request, 'user_center_site.html')
 
 
 class VerifyEmailView(View):
     """验证邮箱"""
+
     def get(self, request):
         """实现邮箱验证逻辑"""
         # 接收参数
@@ -57,6 +105,7 @@ class VerifyEmailView(View):
 
 class EmailView(LoginRequiredJSONMixin, View):
     """添加邮箱"""
+
     def put(self, request):
         # 接收参数
         json_str = request.body.decode()
@@ -81,6 +130,7 @@ class EmailView(LoginRequiredJSONMixin, View):
 
 class UserInfoView(LoginRequiredMixin, View):
     """用户中心"""
+
     def get(self, request):
         """提供用户中心页面"""
         # if request.user.is_authenticated:
@@ -157,6 +207,7 @@ class RegisterView(View):
 
 class LoginView(View):
     """用户登录"""
+
     def get(self, request):
         return render(request, 'login.html')
 
@@ -184,7 +235,7 @@ class LoginView(View):
         # 使用remembered确定状态保持周期（实现记住登录）
         if remembered != 'on':
             # 没有记住密码：状态保持在浏览器会话结束后就销毁
-            request.session.set_expiry(0) # 单位是秒
+            request.session.set_expiry(0)  # 单位是秒
         else:
             # 记住登录：状态保持周期为2周：默认是2周
             request.session.set_expiry(None)
