@@ -31,13 +31,13 @@ class AddressCreateView(LoginRequiredJSONMixin, View):
         receiver = json_dict.get('receiver')
         province_id = json_dict.get('province_id')
         city_id = json_dict.get('city_id')
-        distinct_id = json_dict.get('district_id')
+        district_id = json_dict.get('district_id')
         place = json_dict.get('place')
         mobile = json_dict.get('mobile')
         tel = json_dict.get('tel')
         email = json_dict.get('email')
         # 校验参数
-        if not all([receiver, province_id, city_id, distinct_id, place, mobile]):
+        if not all([receiver, province_id, city_id, district_id, place, mobile]):
             return http.HttpResponseForbidden('缺少必传参数')
         if not re.match(r'^1[3-9]\d{9}$', mobile):
             return http.HttpResponseForbidden('参数mobile有误')
@@ -50,24 +50,29 @@ class AddressCreateView(LoginRequiredJSONMixin, View):
 
         # 保存用户传入的地址信息
         try:
-            Address.objects.create(
+            address = Address.objects.create(
                 user=request.user,
                 title=receiver,
                 receiver=receiver,
                 province_id=province_id,
                 city_id=city_id,
-                distinct_id=distinct_id,
+                district_id=district_id,
                 place=place,
                 mobile=mobile,
                 tel=tel,
                 email=email,
             )
+            # 如果登录用户没有默认的地址，需要指定默认地址
+            if not request.user.default_address:
+                request.user.default_address = address
+                request.user.save()
         except Exception as e:
             logger.error(e)
             return http.JsonResponse({'code': RETCODE.DBERR, 'errmsg':   '新增地址失败'})
 
         # 响应新增地址结果：需要将新增的地址返回给前端渲染
         return http.JsonResponse({'code': RETCODE.OK, 'errmsg': '新增地址成功'})
+        # return http.JsonResponse({'code': RETCODE.OK, 'errmsg': '新增地址成功', 'address': address_dict})
 
 
 class AddressView(LoginRequiredMixin, View):
