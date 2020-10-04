@@ -14,6 +14,7 @@ from .models import Address
 from meiduo_mall.utils.views import LoginRequiredJSONMixin
 from celery_tasks.email.tasks import send_verify_email
 from .utils import generate_verify_email_url, check_verify_email_token
+from . import constants
 
 # Create your views here.
 
@@ -25,6 +26,11 @@ class AddressCreateView(LoginRequiredJSONMixin, View):
 
     def post(self, request):
         """实现新增地址逻辑"""
+        # 判断用户地址数量是否超过上限：查询当前登录用户的地址数量
+        count = request.user.addresses.count()
+        if count > constants.USER_ADDRESS_COUNTS_LIMIT:
+            return http.JsonResponse({'code': RETCODE.OK, 'errmsg': '超出用户地址上限'})
+
         # 接收参数
         json_str = request.body.decode()
         json_dict = json.loads(json_str)
@@ -84,7 +90,6 @@ class AddressCreateView(LoginRequiredJSONMixin, View):
         }
 
         # 响应新增地址结果：需要将新增的地址返回给前端渲染
-        # return http.JsonResponse({'code': RETCODE.OK, 'errmsg': '新增地址成功'})
         return http.JsonResponse({'code': RETCODE.OK, 'errmsg': '新增地址成功', 'address': address_dict})
 
 
