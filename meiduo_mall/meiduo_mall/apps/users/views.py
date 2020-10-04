@@ -94,10 +94,36 @@ class AddressCreateView(LoginRequiredJSONMixin, View):
 
 
 class AddressView(LoginRequiredMixin, View):
-    """收货地址"""
+    """用户收货地址"""
 
     def get(self, request):
-        return render(request, 'user_center_site.html')
+        """查询并展示用户地址信息"""
+        # 获取当前登录用户对象
+        login_user = request.user
+        # 使用当前登录用户和is_deleted=False作为条件查询地址数据
+        addresses = Address.objects.filter(user=login_user, is_deleted=False)
+        # 将用户地址列表转成字典列表:因为JsonResponse和vue.js不认识模型类型，只有django和jinjia2模板引擎认识
+        address_list = []
+        for address in addresses:
+            address_dict = {
+                'id': address.id,
+                'title': address.title,
+                'receiver': address.receiver,
+                'province': address.province.name,
+                'city': address.city.name,
+                'district': address.district.name,
+                'place': address.place,
+                'mobile': address.mobile,
+                'tel': address.tel,
+                'email': address.email,
+            }
+            address_list.append(address_dict)
+        # 构造上下文
+        context = {
+            'addresses': address_list,
+            'default_address_id': login_user.default_address_id,
+        }
+        return render(request, 'user_center_site.html', context)
 
 
 class VerifyEmailView(View):
