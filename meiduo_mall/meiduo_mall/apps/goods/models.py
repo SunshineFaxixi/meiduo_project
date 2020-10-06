@@ -31,7 +31,7 @@ class GoodsChannelGroup(BaseModel):
         return self.name
 
 
-class GoodChannel(BaseModel):
+class GoodsChannel(BaseModel):
     """商品频道"""
     group = models.ForeignKey(GoodsChannelGroup, verbose_name='频道组名')
     category = models.ForeignKey(GoodsCategory, on_delete=models.CASCADE, verbose_name='顶级商品类别')
