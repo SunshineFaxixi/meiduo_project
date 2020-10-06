@@ -244,3 +244,7 @@ EMAIL_FROM = '美多商城<xxhan2018@163.com>' # 发件人抬头
 
 # 验证邮箱链接
 EMAIL_VERIFY_URL = 'http://www.meiduo.site:8000/emails/verification/'
+# 指定自定义的django文件存储类
+DEFAULT_FILE_STORAGE = 'meiduo_mall.utils.fastdfs.fdfs_storage.FastDFSStorage'
+# FastDFS相关参数
+FDFS_BASE_URL = 'http://192.168.1.5:8888/'
