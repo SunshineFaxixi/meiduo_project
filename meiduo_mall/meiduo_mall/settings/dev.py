@@ -29,7 +29,7 @@ SECRET_KEY = 'p!vj!=d%(gm+gdmw36k$izfh8^b7n*x^_hn45d#mssr!n(wg_u'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['www.meiduo.site', '127.0.0.1']
 
 
 # Application definition
@@ -43,6 +43,9 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'users', # 用户模块
     'contents', # 首页广告
+    'oauth', # 第三方登录
+    'areas', # 省市区三级联动
+    'goods', # 商品模块
 ]
 
 MIDDLEWARE = [
@@ -222,3 +225,26 @@ LOGGING = {
 }
 
 AUTH_USER_MODEL = 'users.User'
+AUTHENTICATION_BACKENDS = ['users.utils.UsernameMobileBackend']
+
+LOGIN_URL = '/login/'
+
+# QQ登录的配置参数
+QQ_CLIENT_ID = '101518219'
+QQ_CLIENT_SECRET = '418d84ebdc7241efb79536886ae95224'
+QQ_REDIRECT_URI = 'http://www.meiduo.site:8000/oauth_callback'
+
+# 发送邮箱验证的配置参数
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend' # 指定邮箱后端
+EMAIL_HOST = 'smtp.163.com' # 发邮件主机
+EMAIL_PORT = 25 # 发邮件端口
+EMAIL_HOST_USER = 'xxhan2018@163.com' # 授权的邮箱
+EMAIL_HOST_PASSWORD = 'WFSEZEQGPUHDFTQF' # 邮箱授权时获取的密码，非注册登录密码
+EMAIL_FROM = '美多商城<xxhan2018@163.com>' # 发件人抬头
+
+# 验证邮箱链接
+EMAIL_VERIFY_URL = 'http://www.meiduo.site:8000/emails/verification/'
+# 指定自定义的django文件存储类
+DEFAULT_FILE_STORAGE = 'meiduo_mall.utils.fastdfs.fdfs_storage.FastDFSStorage'
+# FastDFS相关参数
+FDFS_BASE_URL = 'http://192.168.1.5:8888/'

@@ -56,7 +56,11 @@
 							<input type="text" name="sms_code" id="msg_code" class="msg_input">
 							<a href="javascript:;" @click="send_sms_code" class="get_msg_code">[[ sms_code_tip ]]</a>
 							<span v-show="error_sms_code" class="error_tip">[[ error_sms_code_message ]]</span>
-						</li>
+
+{#                            {{% if sms_code_errmsg %}#}
+{#                                <span class="error_tip">{{ sms_code_errmsg }}</span>#}
+{#                            {%  endif %}}#}
+                        </li>
 						<li class="agreement">
 							<input type="checkbox" v-model="allow" @change="check_allow" name="allow" id="allow">
 							<label>同意”美多商城用户使用协议“</label>
